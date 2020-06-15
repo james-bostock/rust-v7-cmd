@@ -1,5 +1,5 @@
-# rust-v6-cmd
-Some Sixth Edition Unix commands implemented in Rust.
+# rust-v7-cmd
+Some Seventh Edition Unix commands implemented in Rust.
 
 Commands implemented:
 

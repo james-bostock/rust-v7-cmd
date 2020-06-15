@@ -1,8 +1,8 @@
-// Copyright 2017, 2019 James Bostock. See the LICENSE file at the
+// Copyright 2017-2020 James Bostock. See the LICENSE file at the
 // top-level directory of this distribution.
 
 // An implementation of the tee(1) command in Rust.
-// See http://man.cat-v.org/unix-6th/1/tee
+// See http://man.cat-v.org/unix-7th/1/tee
 use std::env;
 use std::fs::File;
 use std::io;

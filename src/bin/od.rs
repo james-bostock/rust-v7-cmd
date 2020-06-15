@@ -2,7 +2,7 @@
 // directory of this distribution.
 
 // An implementation of the od(1) command in Rust.
-// See http://man.cat-v.org/unix-6th/1/od
+// See http://man.cat-v.org/unix-7th/1/od
 use std::env;
 use std::io;
 use std::io::BufReader;
@@ -14,7 +14,7 @@ use std::io::Stdout;
 use std::io::Write;
 use std::num::ParseIntError;
 
-mod util;
+use rust_v7_lib as lib;
 
 type FmtFn = fn(&mut BufWriter<Stdout>, &[u8]) -> io::Result<usize>;
 
@@ -142,7 +142,7 @@ fn test_parse_offset() {
 fn od(filename: &str, offset: u64,
       fmt_fns: &[FmtFn])
       -> io::Result<u64> {
-    let mut reader = BufReader::new(util::Input::open(filename)?);
+    let mut reader = BufReader::new(lib::Input::open(filename)?);
     let mut writer = BufWriter::new(io::stdout());
     let mut offset = offset;
 
@@ -181,19 +181,19 @@ fn main() {
     let mut offset : u64 = 0;
     let mut offstr = String::from("0");
     let mut fmt_fns: Vec<FmtFn> = Vec::new();
-    let getopt = util::GetOpt::new("bcdho", args);
+    let getopt = lib::GetOpt::new("bcdho", args);
 
     // Default to reading from standard input.
     let mut filename = String::from("-");
 
     for arg in getopt {
 	match arg {
-	    Ok(util::Arg::Opt('b')) => fmt_fns.push(write_oct_bytes),
-	    Ok(util::Arg::Opt('c')) => fmt_fns.push(write_ascii_chars),
-	    Ok(util::Arg::Opt('d')) => fmt_fns.push(write_dec_words),
-	    Ok(util::Arg::Opt('h')) => fmt_fns.push(write_hex_words),
-	    Ok(util::Arg::Opt('o')) => fmt_fns.push(write_oct_words),
-	    Ok(util::Arg::Arg(val)) => {
+	    Ok(lib::Arg::Opt('b')) => fmt_fns.push(write_oct_bytes),
+	    Ok(lib::Arg::Opt('c')) => fmt_fns.push(write_ascii_chars),
+	    Ok(lib::Arg::Opt('d')) => fmt_fns.push(write_dec_words),
+	    Ok(lib::Arg::Opt('h')) => fmt_fns.push(write_hex_words),
+	    Ok(lib::Arg::Opt('o')) => fmt_fns.push(write_oct_words),
+	    Ok(lib::Arg::Arg(val)) => {
 		if val.starts_with('+') {
 		    offstr = val;
 		} else {

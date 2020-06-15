@@ -1,9 +1,12 @@
 [package]
-name = "rust-v6-cmd"
+name = "rust-v7-cmd"
 version = "0.1.0"
 authors = ["James Bostock <james.bostock@gmail.com>"]
-description = "Some Sixth Edition Unix commands implemented in Rust"
-repository = "https://github.com/james-bostock/rust-v6-cmd"
+description = "Some Seventh Edition Unix commands implemented in Rust"
+repository = "https://github.com/james-bostock/rust-v7-cmd"
 readme = "README.md"
 license = "MIT"
 edition = "2018"
+
+[dependencies]
+rust-v7-lib = { path = "../rust-v7-lib" }

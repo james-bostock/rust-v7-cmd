@@ -2,13 +2,13 @@
 // top-level directory of this distribution.
 
 // An implementation of the rm(1) command in Rust.
-// See http://man.cat-v.org/unix-6th/1/rm
+// See http://man.cat-v.org/unix-7th/1/rm
 use std::env;
 use std::fs;
 use std::io;
 use std::io::Write;
 
-mod util;
+use rust_v7_lib as lib;
 
 /// Prompts user for confirmation
 fn confirm(msg: &str) -> io::Result<bool> {
@@ -57,13 +57,13 @@ fn main() {
     let mut force: bool = false;
     let mut recursive: bool = false;
     let mut print_usage = true;
-    let getopt = util::GetOpt::new("rf", args);
+    let getopt = lib::GetOpt::new("rf", args);
 
     for optarg in getopt {
         match optarg {
-            Ok(util::Arg::Opt('f')) => force = true,
-            Ok(util::Arg::Opt('r')) => recursive = true,
-            Ok(util::Arg::Arg(arg)) => {
+            Ok(lib::Arg::Opt('f')) => force = true,
+            Ok(lib::Arg::Opt('r')) => recursive = true,
+            Ok(lib::Arg::Arg(arg)) => {
                 match rm(&arg, force, recursive) {
                     Ok(_) => print_usage = false,
                     Err(e) => {

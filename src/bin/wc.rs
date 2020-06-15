@@ -2,17 +2,13 @@
 // top-level directory of this distribution.
 
 // An implementation of the wc(1) command in Rust.
-// See http://man.cat-v.org/unix-6th/1/wc
-//
-// In reality, this is more of a V7 implementation given that the V6
-// wc(1) did not provide a character (i.e. byte) count and did not
-// support command line options.
+// See http://man.cat-v.org/unix-7th/1/wc
 use std::env;
 use std::fmt;
 use std::io;
 use std::ops;
 
-mod util;
+use rust_v7_lib as lib;
 
 struct Format {
     chars: bool, // Technically bytes.
@@ -104,7 +100,7 @@ impl<'a, 'b> io::Write for Counts<'a, 'b> {
 }
 
 fn wc<'a, 'b>(filename: &'a str, format: &'b Format) -> io::Result<Counts<'a, 'b>> {
-    let mut reader = util::Input::open(&filename)?;
+    let mut reader = lib::Input::open(&filename)?;
     let mut wc = Counts::new(&filename, format);
     io::copy(&mut reader, &mut wc)?;
     Ok(wc)
@@ -115,26 +111,26 @@ fn main () {
     let prog = args.next().unwrap();
 
     let mut format = Format::new();
-    let getopt = util::GetOpt::new("clw", args);
+    let getopt = lib::GetOpt::new("clw", args);
 
     let mut format_specified = false;
     let mut files : Vec<String> = Vec::new();
 
     for optarg in getopt {
         match optarg {
-            Ok(util::Arg::Opt('c')) => {
+            Ok(lib::Arg::Opt('c')) => {
                 format.chars = true;
                 format_specified = true;
             },
-            Ok(util::Arg::Opt('l')) => {
+            Ok(lib::Arg::Opt('l')) => {
                 format.lines = true;
                 format_specified = true;
             },
-            Ok(util::Arg::Opt('w')) => {
+            Ok(lib::Arg::Opt('w')) => {
                 format.words = true;
                 format_specified = true;
             },
-            Ok(util::Arg::Arg(arg)) => files.push(arg),
+            Ok(lib::Arg::Arg(arg)) => files.push(arg),
 	    Ok(val) => {
 		// Should never happen.
 		eprintln!("{}: error: unexpected: {:?}", prog, val);
