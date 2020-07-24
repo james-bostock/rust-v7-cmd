@@ -67,13 +67,13 @@ fn write_ascii_chars(out: &mut BufWriter<Stdout>, data: &[u8])
                      -> io::Result<usize> {
     for byte in data {
         match *byte {
-            7u8 => write!(out, " \\g")?,
-            8u8 => write!(out, " \\b")?,
-            9u8 => write!(out, " \\t")?,
-            10u8 => write!(out, " \\n")?,
-            11u8 => write!(out, " \\v")?,
-            12u8 => write!(out, " \\f")?,
-            13u8 => write!(out, " \\r")?,
+            7u8 => write!(out, "  \\g")?,
+            8u8 => write!(out, "  \\b")?,
+            9u8 => write!(out, "  \\t")?,
+            10u8 => write!(out, "  \\n")?,
+            11u8 => write!(out, "  \\v")?,
+            12u8 => write!(out, "  \\f")?,
+            13u8 => write!(out, "  \\r")?,
             _ => if *byte < 32u8 || *byte > 126u8 {
                 write!(out, " {:03o}", *byte)?
             } else {
