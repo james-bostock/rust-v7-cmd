@@ -33,7 +33,11 @@ fn write_oct_bytes(out: &mut BufWriter<Stdout>, data: &[u8])
 fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8])
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-        write!(out, "  {:06o}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+	if word.len() == 1 {
+            write!(out, "  {:06o}", u16::from(word[0]))?;
+	} else {
+            write!(out, "  {:06o}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+	}
     }
     writeln!(out)?;
     Ok(data.len())
@@ -44,7 +48,11 @@ fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8])
 fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8])
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-        write!(out, "  {:06}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+	if word.len() == 1 {
+            write!(out, "  {:06}", u16::from(word[0]))?;
+	} else {
+            write!(out, "  {:06}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+	}
     }
     writeln!(out)?;
     Ok(data.len())
@@ -55,7 +63,11 @@ fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8])
 fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8])
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-        write!(out, "  {:04x}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+	if word.len() == 1 {
+            write!(out, "  {:04x}", u16::from(word[0]))?;
+	} else {
+            write!(out, "  {:04x}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+	}
     }
     writeln!(out)?;
     Ok(data.len())
@@ -162,7 +174,7 @@ fn od(filename: &str, offset: u64,
                 } else {
                     write!(writer, "       ")?;
                 }
-                fmt_fn(&mut writer, &chunk)?;
+                fmt_fn(&mut writer, &chunk[0..n])?;
                 offset += chunk.len() as u64;
             }
         }
