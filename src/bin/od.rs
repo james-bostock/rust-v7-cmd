@@ -55,7 +55,7 @@ fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8])
 fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8])
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-        write!(out, "  {:06x}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+        write!(out, "  {:04x}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
     }
     writeln!(out)?;
     Ok(data.len())
