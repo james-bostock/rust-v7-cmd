@@ -181,7 +181,7 @@ fn main() {
     let mut offset : u64 = 0;
     let mut offstr = String::from("0");
     let mut fmt_fns: Vec<FmtFn> = Vec::new();
-    let getopt = lib::GetOpt::new("bcdho", args);
+    let getopt = lib::GetOpt::new("bcdox", args);
 
     // Default to reading from standard input.
     let mut filename = String::from("-");
@@ -191,7 +191,7 @@ fn main() {
 	    Ok(lib::Arg::Opt('b')) => fmt_fns.push(write_oct_bytes),
 	    Ok(lib::Arg::Opt('c')) => fmt_fns.push(write_ascii_chars),
 	    Ok(lib::Arg::Opt('d')) => fmt_fns.push(write_dec_words),
-	    Ok(lib::Arg::Opt('h')) => fmt_fns.push(write_hex_words),
+	    Ok(lib::Arg::Opt('x')) => fmt_fns.push(write_hex_words),
 	    Ok(lib::Arg::Opt('o')) => fmt_fns.push(write_oct_words),
 	    Ok(lib::Arg::Arg(val)) => {
 		if val.starts_with('+') {
