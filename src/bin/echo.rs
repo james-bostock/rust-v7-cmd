@@ -5,7 +5,14 @@
 // See http://man.cat-v.org/unix-7th/1/echo
 
 fn main() {
+    let mut first = true;
     for arg in std::env::args().skip(1) {
-        println!("{}", arg);
+	if first {
+	    first = false;
+	} else {
+	    print!(" ");
+	}
+        print!("{}", arg);
     }
+    println!();
 }
