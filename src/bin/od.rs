@@ -16,13 +16,17 @@ use std::num::ParseIntError;
 
 use rust_v7_lib as lib;
 
-type FmtFn = fn(&mut BufWriter<Stdout>, &[u8]) -> io::Result<usize>;
+type FmtFn = fn(&mut BufWriter<Stdout>, &[u8], usize) -> io::Result<usize>;
 
 /// Writes a chunk of output data as octal byte values.
-fn write_oct_bytes(out: &mut BufWriter<Stdout>, data: &[u8])
+fn write_oct_bytes(out: &mut BufWriter<Stdout>, data: &[u8], _: usize)
                    -> io::Result<usize> {
-    for byte in data {
-        write!(out, " {:03o}", byte)?;
+    for word in data.chunks(2) {
+	if word.len() == 1 {
+	    write!(out, " {:03o}", word[0])?;
+	} else {
+	    write!(out, " {:03o} {:03o}", word[0], word[1])?;
+	}
     }
     writeln!(out)?;
     Ok(data.len())
@@ -30,13 +34,14 @@ fn write_oct_bytes(out: &mut BufWriter<Stdout>, data: &[u8])
 
 /// Writes a chunk of output data as octal (16 bit) word values. Words are
 /// assumed to be little endian.
-fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8])
+fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
                    -> io::Result<usize> {
     for word in data.chunks(2) {
 	if word.len() == 1 {
-            write!(out, " {:06o}", u16::from(word[0]))?;
+	    write!(out, " {1:>0$}", width, format!("{:06o}", u16::from(word[0])))?;
 	} else {
-            write!(out, " {:06o}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+            write!(out, " {1:>0$}", width,
+		   format!("{:06o}", u16::from(word[1]) << 8 | u16::from(word[0])))?;
 	}
     }
     writeln!(out)?;
@@ -45,13 +50,14 @@ fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8])
 
 /// Writes a chunk of output data as decimal (16 bit) word values. Words are
 /// assumed to be little endian.
-fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8])
+fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
                    -> io::Result<usize> {
     for word in data.chunks(2) {
 	if word.len() == 1 {
-            write!(out, " {:06}", u16::from(word[0]))?;
+            write!(out, " {1:>0$}", width, format!("{:06}", u16::from(word[0])))?;
 	} else {
-            write!(out, " {:06}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+            write!(out, " {1:>0$}", width,
+		   format!("{:5}", u16::from(word[1]) << 8 | u16::from(word[0])))?;
 	}
     }
     writeln!(out)?;
@@ -60,13 +66,14 @@ fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8])
 
 /// Writes a chunk of output data as hexadecimal (16 bit) word values. Words
 /// are assumed to be little endian.
-fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8])
+fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
                    -> io::Result<usize> {
     for word in data.chunks(2) {
 	if word.len() == 1 {
-            write!(out, " {:04x}", u16::from(word[0]))?;
+            write!(out, " {1:>0$}", width, format!("{:04x}", u16::from(word[0])))?;
 	} else {
-            write!(out, " {:04x}", u16::from(word[1]) << 8 | u16::from(word[0]))?;
+            write!(out, " {1:>0$}", width,
+		   format!("{:04x}", u16::from(word[1]) << 8 | u16::from(word[0])))?;
 	}
     }
     writeln!(out)?;
@@ -75,27 +82,40 @@ fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8])
 
 /// Writes a chunk of data as ASCII, reverting to octal byte values for
 /// non-printable characters. Standard escape sequences are supported.
-fn write_ascii_chars(out: &mut BufWriter<Stdout>, data: &[u8])
+fn write_ascii_chars(out: &mut BufWriter<Stdout>, data: &[u8], _: usize)
                      -> io::Result<usize> {
-    for byte in data {
-        match *byte {
-            7u8 => write!(out, "  \\g")?,
-            8u8 => write!(out, "  \\b")?,
-            9u8 => write!(out, "  \\t")?,
-            10u8 => write!(out, "  \\n")?,
-            11u8 => write!(out, "  \\v")?,
-            12u8 => write!(out, "  \\f")?,
-            13u8 => write!(out, "  \\r")?,
-            _ => if *byte < 32u8 || *byte > 126u8 {
-                write!(out, " {:03o}", *byte)?
-            } else {
-                write!(out, "   {}", *byte as char)?
-            }
-        }
+    for word in data.chunks(2) {
+	if word.len() == 1 {
+	    write_ascii_char(out, word[0])?;
+	} else {
+	    write_ascii_char(out, word[0])?;
+	    write_ascii_char(out, word[1])?;
+	}
     }
     writeln!(out)?;
     Ok(data.len())
 }
+
+/// Write a byte as ASCII, reverting to octal byte values for
+/// non-printable characters. Standard escape sequences are supported.
+fn write_ascii_char(out: &mut BufWriter<Stdout>, byte: u8) -> io::Result<()> {
+    match byte {
+        7u8 => write!(out, "  \\g")?,
+        8u8 => write!(out, "  \\b")?,
+        9u8 => write!(out, "  \\t")?,
+        10u8 => write!(out, "  \\n")?,
+        11u8 => write!(out, "  \\v")?,
+        12u8 => write!(out, "  \\f")?,
+        13u8 => write!(out, "  \\r")?,
+        _ => if byte < 32u8 || byte > 126u8 {
+            write!(out, " {:03o}", byte)?
+        } else {
+            write!(out, "   {}", byte as char)?
+        }
+    }
+
+    Ok(())
+ }
 
 const CHUNK_SIZE: usize = 16;
 
@@ -152,7 +172,7 @@ fn test_parse_offset() {
 
 /// Dumps the data read from the named input source to the standard output.
 fn od(filename: &str, offset: u64,
-      fmt_fns: &[FmtFn])
+      fmt_fns: &[FmtFn], width: usize)
       -> io::Result<u64> {
     let mut reader = BufReader::new(lib::Input::open(filename)?);
     let mut writer = BufWriter::new(io::stdout());
@@ -174,7 +194,7 @@ fn od(filename: &str, offset: u64,
                 } else {
                     write!(writer, "       ")?;
                 }
-                fmt_fn(&mut writer, &chunk[0..n])?;
+                fmt_fn(&mut writer, &chunk[0..n], width)?;
                 offset += chunk.len() as u64;
             }
         }
@@ -193,6 +213,7 @@ fn main() {
     let mut offset : u64 = 0;
     let mut offstr = String::from("0");
     let mut fmt_fns: Vec<FmtFn> = Vec::new();
+    let mut width : usize = 0;
     let getopt = lib::GetOpt::new("bcdox", args);
 
     // Default to reading from standard input.
@@ -200,11 +221,36 @@ fn main() {
 
     for arg in getopt {
 	match arg {
-	    Ok(lib::Arg::Opt('b')) => fmt_fns.push(write_oct_bytes),
-	    Ok(lib::Arg::Opt('c')) => fmt_fns.push(write_ascii_chars),
-	    Ok(lib::Arg::Opt('d')) => fmt_fns.push(write_dec_words),
-	    Ok(lib::Arg::Opt('x')) => fmt_fns.push(write_hex_words),
-	    Ok(lib::Arg::Opt('o')) => fmt_fns.push(write_oct_words),
+	    Ok(lib::Arg::Opt('b')) => {
+		fmt_fns.push(write_oct_bytes);
+		if width < 7 {
+		    width = 7;
+		}
+	    },
+	    Ok(lib::Arg::Opt('c')) => {
+		fmt_fns.push(write_ascii_chars);
+		if width < 7 {
+		    width = 7;
+		}
+	    },
+	    Ok(lib::Arg::Opt('d')) => {
+		fmt_fns.push(write_dec_words);
+		if width < 5 {
+		    width = 5;
+		}
+	    },
+	    Ok(lib::Arg::Opt('x')) => {
+		fmt_fns.push(write_hex_words);
+		if width < 4 {
+		    width = 4;
+		}
+	    },
+	    Ok(lib::Arg::Opt('o')) => {
+		fmt_fns.push(write_oct_words);
+		if width < 6 {
+		    width = 6;
+		}
+	    },
 	    Ok(lib::Arg::Arg(val)) => {
 		if val.starts_with('+') {
 		    offstr = val;
@@ -227,14 +273,16 @@ fn main() {
     // If no output formats have been specified, default to octal words.
     if fmt_fns.is_empty() {
         fmt_fns.push(write_oct_words);
+	width = 6;
     }
 
+    println!("width: {}", width);
     match parse_offset(&offstr) {
         Ok(off) => offset = off,
         Err(e) => println!("{}: {}", offstr, e)
     }
 
-    match od(&filename, offset, &fmt_fns) {
+    match od(&filename, offset, &fmt_fns, width) {
         Ok(_) => std::process::exit(0),
         Err(e) => {
             eprintln!("Error: {}", e);
