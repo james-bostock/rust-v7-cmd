@@ -192,8 +192,8 @@ fn od(filename: &str, offset: u64,
                     write!(writer, "       ")?;
                 }
                 fmt_fn(&mut writer, &chunk[0..n], width)?;
-                offset += chunk.len() as u64;
             }
+            offset += chunk.len() as u64;
         }
 
         if n < CHUNK_SIZE {
