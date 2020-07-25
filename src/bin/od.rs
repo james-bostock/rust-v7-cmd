@@ -32,17 +32,24 @@ fn write_oct_bytes(out: &mut BufWriter<Stdout>, data: &[u8], _: usize)
     Ok(data.len())
 }
 
+/// Writes a word using the supplied format specifier.
+macro_rules! write_word {
+    ($out:expr, $word:expr, $fmt:expr, $width:expr) => {
+	if $word.len() == 1 {
+	    write!($out, " {1:>0$}", $width, format!($fmt, u16::from($word[0])))?;
+	} else {
+            write!($out, " {1:>0$}", $width,
+		   format!($fmt, u16::from($word[1]) << 8 | u16::from($word[0])))?;
+	}
+    }
+}
+
 /// Writes a chunk of output data as octal (16 bit) word values. Words are
 /// assumed to be little endian.
 fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-	if word.len() == 1 {
-	    write!(out, " {1:>0$}", width, format!("{:06o}", u16::from(word[0])))?;
-	} else {
-            write!(out, " {1:>0$}", width,
-		   format!("{:06o}", u16::from(word[1]) << 8 | u16::from(word[0])))?;
-	}
+	write_word!(out, word, "{:06o}", width);
     }
     writeln!(out)?;
     Ok(data.len())
@@ -53,12 +60,7 @@ fn write_oct_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
 fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-	if word.len() == 1 {
-            write!(out, " {1:>0$}", width, format!("{:06}", u16::from(word[0])))?;
-	} else {
-            write!(out, " {1:>0$}", width,
-		   format!("{:5}", u16::from(word[1]) << 8 | u16::from(word[0])))?;
-	}
+	write_word!(out, word, "{:5}", width);
     }
     writeln!(out)?;
     Ok(data.len())
@@ -69,12 +71,7 @@ fn write_dec_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
 fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
                    -> io::Result<usize> {
     for word in data.chunks(2) {
-	if word.len() == 1 {
-            write!(out, " {1:>0$}", width, format!("{:04x}", u16::from(word[0])))?;
-	} else {
-            write!(out, " {1:>0$}", width,
-		   format!("{:04x}", u16::from(word[1]) << 8 | u16::from(word[0])))?;
-	}
+	write_word!(out, word, "{:04x}", width);
     }
     writeln!(out)?;
     Ok(data.len())
