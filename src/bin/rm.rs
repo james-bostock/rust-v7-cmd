@@ -28,23 +28,48 @@ fn confirm(msg: &str) -> io::Result<bool> {
     }
 }
 
-/// Removes a file or directory
-fn rm(name: &str, force: bool, recursive: bool) -> io::Result<()> {
+/// Removes a file or directory. Returns OK(()) unless one of the
+/// filesystem operations fails.
+fn rm(prog: &str, name: &str, force: bool, recursive: bool,
+      interactive: bool) -> io::Result<()> {
     let md = fs::metadata(name)?;
-    let go = if !force && md.permissions().readonly() {
-        let mut msg = "rm: remove readonly file ".to_string();
-        msg.push_str(&name);
-        msg.push_str("?");
+    let readonly = md.permissions().readonly();
+
+    if name == "." || name == ".." {
+	println!("{}: cannot remove directory '{}'", prog, name);
+	return Ok(())
+    }
+
+    if md.is_dir() && !recursive {
+	println!("{}: cannot remove '{}': it is a directory", prog, name);
+	return Ok(())
+    }
+
+    let go = if (!force && readonly) || interactive {
+	let msg = format!("{}: remove {}{} '{}'?",
+			  prog,
+			  if readonly {
+			      "readonly "
+			  } else {
+			      ""
+			  },
+			  if md.is_dir() {
+			      "directory"
+			  } else {
+			      "file"
+			  },
+			  name
+	);
         confirm(&msg)?
     } else {
         true
     };
 
     if go {
-        if recursive {
+        if md.is_dir() {
             fs::remove_dir_all(name)
         } else {
-            fs::remove_file(name)
+	    fs::remove_file(name)
         }
     } else {
         Ok(())
@@ -55,16 +80,18 @@ fn main() {
     let mut args = env::args();
     let prog = args.next().unwrap();
     let mut force: bool = false;
+    let mut interactive: bool = false;
     let mut recursive: bool = false;
     let mut print_usage = true;
-    let getopt = lib::GetOpt::new("rf", args);
+    let getopt = lib::GetOpt::new("fri", args);
 
     for optarg in getopt {
         match optarg {
             Ok(lib::Arg::Opt('f')) => force = true,
             Ok(lib::Arg::Opt('r')) => recursive = true,
+            Ok(lib::Arg::Opt('i')) => interactive = true,
             Ok(lib::Arg::Arg(arg)) => {
-                match rm(&arg, force, recursive) {
+                match rm(&prog, &arg, force, recursive, interactive) {
                     Ok(_) => print_usage = false,
                     Err(e) => {
                         eprintln!("{}: {}", arg, e);
@@ -84,7 +111,7 @@ fn main() {
     }
 
     if print_usage {
-        eprintln!("usage: {} [-f][-r] file ...", prog);
+        eprintln!("usage: {} [-fri] file ...", prog);
         std::process::exit(1);
     }
     std::process::exit(0);
