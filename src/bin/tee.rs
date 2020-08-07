@@ -4,9 +4,11 @@
 // An implementation of the tee(1) command in Rust.
 // See http://man.cat-v.org/unix-7th/1/tee
 use std::env;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::{Result, Write};
+
+use rust_v7_lib as lib;
 
 /// A multi-way writer.
 struct Tee {
@@ -45,21 +47,43 @@ impl Write for Tee {
     }
 }
 
+// Opens a file for either writing (i.e. truncating) or appending.
+fn open_helper(path: &str, append: bool) -> io::Result<File> {
+    if append {
+	OpenOptions::new().append(true).open(path)
+    } else {
+	File::create(path)
+    }
+}
+
 fn main() {
-    let args: Vec<_> = env::args().collect();
-
-    let prog = &args[0];
-
+    let mut args = env::args();
+    let prog = args.next().unwrap();
+    let getopt = lib::GetOpt::new("a", args);
     let mut tee: Tee = Tee::new();
+    let mut append = false;
 
     tee.push(Box::new(io::stdout()));
 
-    for arg in args.iter().skip(1) {
-        match File::create(&arg) {
-            Ok(f) => { tee.writers.push(Box::new(f)); },
-            Err(e) => { eprintln!("{}: {}: {}", prog, arg, e); }
-        }
+    for optarg in getopt {
+        match optarg {
+	    Ok(lib::Arg::Opt('a')) => append = true,
+            Ok(lib::Arg::Arg(arg)) => {
+		match open_helper(&arg, append) {
+			Ok(f) => { tee.writers.push(Box::new(f)); },
+			Err(e) => { eprintln!("{}: {}: {}", prog, arg, e); }
+		    }
+	    },
+	    Ok(val) => {
+                eprintln!("{}: error: unexpected: {:?}", prog, val);
+                std::process::exit(1);
+            },
+            Err(e) => {
+                eprintln!("{}: error: {}", prog, e);
+                std::process::exit(1);
+            }
+	}
     }
 
-    io::copy(&mut io::stdin(), &mut tee).expect(prog);
+    io::copy(&mut io::stdin(), &mut tee).expect(&prog);
 }
