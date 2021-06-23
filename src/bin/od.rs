@@ -82,10 +82,8 @@ fn write_hex_words(out: &mut BufWriter<Stdout>, data: &[u8], width: usize)
 fn write_ascii_chars(out: &mut BufWriter<Stdout>, data: &[u8], _: usize)
                      -> io::Result<usize> {
     for word in data.chunks(2) {
-	if word.len() == 1 {
-	    write_ascii_char(out, word[0])?;
-	} else {
-	    write_ascii_char(out, word[0])?;
+	write_ascii_char(out, word[0])?;
+	if word.len() > 1 {
 	    write_ascii_char(out, word[1])?;
 	}
     }
@@ -104,7 +102,7 @@ fn write_ascii_char(out: &mut BufWriter<Stdout>, byte: u8) -> io::Result<()> {
         11u8 => write!(out, "  \\v")?,
         12u8 => write!(out, "  \\f")?,
         13u8 => write!(out, "  \\r")?,
-        _ => if byte < 32u8 || byte > 126u8 {
+        _ => if !(32u8..=126u8).contains(&byte) {
             write!(out, " {:03o}", byte)?
         } else {
             write!(out, "   {}", byte as char)?
@@ -134,7 +132,7 @@ fn parse_offset(offstr: &str) -> Result<u64, ParseIntError> {
             }
         },
         Some((x, '.')) => (&offstr[0..x], 10),
-        Some((_, _)) => (&offstr[..], 8),
+        Some((_, _)) => (offstr, 8),
         None => (&offstr[0..0], 8)
     };
 
