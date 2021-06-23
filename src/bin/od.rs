@@ -273,7 +273,6 @@ fn main() {
 	width = 6;
     }
 
-    println!("width: {}", width);
     match parse_offset(&offstr) {
         Ok(off) => offset = off,
         Err(e) => println!("{}: {}", offstr, e)
