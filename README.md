@@ -3,6 +3,7 @@ Some Seventh Edition Unix commands implemented in Rust.
 
 Commands implemented:
 
+* basename
 * cat
 * echo
 * od
