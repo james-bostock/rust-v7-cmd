@@ -100,8 +100,8 @@ impl<'a, 'b> io::Write for Counts<'a, 'b> {
 }
 
 fn wc<'a, 'b>(filename: &'a str, format: &'b Format) -> io::Result<Counts<'a, 'b>> {
-    let mut reader = lib::Input::open(&filename)?;
-    let mut wc = Counts::new(&filename, format);
+    let mut reader = lib::Input::open(filename)?;
+    let mut wc = Counts::new(filename, format);
     io::copy(&mut reader, &mut wc)?;
     Ok(wc)
 }
@@ -156,7 +156,7 @@ fn main () {
     }
 
     for arg in &files {
-        match wc(&arg, &format) {
+        match wc(arg, &format) {
             Ok(wc) => {
                 println!("{}", wc);
                 total += wc;
