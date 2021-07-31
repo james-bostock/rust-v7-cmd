@@ -1,4 +1,4 @@
-// Copyright 2018-2020 James Bostock. See the LICENSE file at the
+// Copyright 2018-2021 James Bostock. See the LICENSE file at the
 // top-level directory of this distribution.
 
 // An implementation of the wc(1) command in Rust.
